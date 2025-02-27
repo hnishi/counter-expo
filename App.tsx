@@ -7,6 +7,7 @@ import {
   Platform,
   Animated,
   Dimensions,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
@@ -103,101 +104,101 @@ export default function App() {
   }, [reset, handleVibration, handleSound]);
 
   const handleMainPress = useCallback(() => {
-    increment();
-    animatePress();
-  }, [increment, animatePress]);
+    if (!isSettingsOpen && !isConfirmOpen) {
+      increment();
+      animatePress();
+    }
+  }, [increment, animatePress, isSettingsOpen, isConfirmOpen]);
 
   return (
-    <View style={styles.container}>
-      <StatusBar style="light" />
-      <LinearGradient
-        colors={["#4338ca", "#3b82f6"]}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
+    <TouchableWithoutFeedback onPress={handleMainPress}>
+      <View style={styles.container}>
+        <StatusBar style="light" />
+        <LinearGradient
+          colors={["#4338ca", "#3b82f6"]}
+          style={styles.gradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
 
-      {/* メインエリア */}
-      <Animated.View style={[styles.mainContent, { transform: [{ scale }] }]}>
+        {/* メインエリア */}
+        <Animated.View style={[styles.mainContent, { transform: [{ scale }] }]}>
+          <View style={styles.counterArea}>
+            <Text style={styles.title}>Counter</Text>
+            <Animated.Text
+              style={[
+                styles.counterText,
+                count > prevCount
+                  ? styles.incrementText
+                  : count < prevCount
+                  ? styles.decrementText
+                  : null,
+              ]}
+            >
+              {count}
+            </Animated.Text>
+            <Text style={styles.helpText}>タップしてカウントアップ</Text>
+            {Platform.OS === "web" && (
+              <Text style={styles.shortcutText}>
+                ショートカット: Space/↑ (上), ↓ (下), R (リセット)
+              </Text>
+            )}
+          </View>
+        </Animated.View>
+
+        {/* 操作ボタン */}
+        <View style={styles.buttonContainer} pointerEvents="box-none">
+          <TouchableOpacity style={styles.button} onPress={decrement}>
+            <Text style={styles.buttonText}>-1</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleResetClick}>
+            <Text style={styles.buttonText}>Reset</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={increment}>
+            <Text style={styles.buttonText}>+1</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 設定ボタン */}
         <TouchableOpacity
-          style={styles.counterArea}
-          onPress={handleMainPress}
-          activeOpacity={0.8}
+          style={styles.settingsButton}
+          onPress={() => setIsSettingsOpen(!isSettingsOpen)}
         >
-          <Text style={styles.title}>Counter</Text>
-          <Animated.Text
-            style={[
-              styles.counterText,
-              count > prevCount
-                ? styles.incrementText
-                : count < prevCount
-                ? styles.decrementText
-                : null,
-            ]}
+          <Text style={styles.settingsButtonText}>⚙️</Text>
+        </TouchableOpacity>
+
+        {/* 確認ダイアログ */}
+        <ConfirmDialog
+          isOpen={isConfirmOpen}
+          onConfirm={handleResetConfirm}
+          onCancel={() => setIsConfirmOpen(false)}
+          message="カウンターをリセットしますか？"
+        />
+
+        {/* 設定パネル */}
+        <SettingsPanel
+          isOpen={isSettingsOpen}
+          vibrationEnabled={vibrationEnabled}
+          soundEnabled={soundEnabled}
+          onUpdateSettings={updateSettings}
+          onClose={() => setIsSettingsOpen(false)}
+        />
+
+        {/* クレジット */}
+        <Text style={styles.creditText}>
+          Created by{" "}
+          <Text
+            style={styles.link}
+            onPress={() =>
+              Platform.OS === "web" &&
+              window.open("https://github.com/hnishi/counter-expo", "_blank")
+            }
           >
-            {count}
-          </Animated.Text>
-          <Text style={styles.helpText}>タップしてカウントアップ</Text>
-          {Platform.OS === "web" && (
-            <Text style={styles.shortcutText}>
-              ショートカット: Space/↑ (上), ↓ (下), R (リセット)
-            </Text>
-          )}
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* 操作ボタン */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={decrement}>
-          <Text style={styles.buttonText}>-1</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={handleResetClick}>
-          <Text style={styles.buttonText}>Reset</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={increment}>
-          <Text style={styles.buttonText}>+1</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* 設定ボタン */}
-      <TouchableOpacity
-        style={styles.settingsButton}
-        onPress={() => setIsSettingsOpen(!isSettingsOpen)}
-      >
-        <Text style={styles.settingsButtonText}>⚙️</Text>
-      </TouchableOpacity>
-
-      {/* 確認ダイアログ */}
-      <ConfirmDialog
-        isOpen={isConfirmOpen}
-        onConfirm={handleResetConfirm}
-        onCancel={() => setIsConfirmOpen(false)}
-        message="カウンターをリセットしますか？"
-      />
-
-      {/* 設定パネル */}
-      <SettingsPanel
-        isOpen={isSettingsOpen}
-        vibrationEnabled={vibrationEnabled}
-        soundEnabled={soundEnabled}
-        onUpdateSettings={updateSettings}
-        onClose={() => setIsSettingsOpen(false)}
-      />
-
-      {/* クレジット */}
-      <Text style={styles.creditText}>
-        Created by{" "}
-        <Text
-          style={styles.link}
-          onPress={() =>
-            Platform.OS === "web" &&
-            window.open("https://github.com/hnishi/counter-expo", "_blank")
-          }
-        >
-          hnishi
+            hnishi
+          </Text>
         </Text>
-      </Text>
-    </View>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 
